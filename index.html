@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+
+<head>
+
+<title>Cal Poly Registration Rotations</title>
+<link href="http://fonts.googleapis.com/css?family=Roboto:300,700" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+
+<script type="text/javascript">
+
+var rotation = [1, 12, 5, 7, 3, 11, 4, 9, 2, 10, 6, 8];
+var BASE_YEAR = 2013;
+
+var Group = function(beg, end, rot) {
+    this.beg = beg;
+    this.end = end;
+    this.rot = rot;
+};
+
+Group.prototype.getFutureRotation = function(yearOffset, term) {
+    return rotation[(rotation.indexOf(this.rot) + (yearOffset * 3) + term) % 12];
+}
+
+Group.prototype.contains = function(lastName) {
+    var str = lastName.substring(0, 3);
+
+    while (str.length < 3) {
+        str += "a";
+    }
+
+    return this.beg.localeCompare(str) <= 0 &&
+        this.end.localeCompare(str) >= 0;
+};
+
+var group = [
+    new Group("aaa", "bol", 9),
+    new Group("bom", "coh", 7),
+    new Group("coi", "elz", 8),
+    new Group("ema", "gra", 12),
+    new Group("grb", "hun", 10),
+    new Group("huo", "lan", 11),
+    new Group("lao", "mce", 6),
+    new Group("mcf", "olz", 4),
+    new Group("oma", "ric", 5),
+    new Group("rid", "smh", 3),
+    new Group("smi", "val", 1),
+    new Group("vam", "zzz", 2)
+];
+
+var isValidName = function(lastName) {
+    return lastName.length > 0 && /^[A-Za-z]+$/.test(lastName);
+};
+
+var getYearOffset = function() {
+    var date = new Date();
+    var month = date.getMonth();
+    var year = date.getFullYear();
+
+    // If it's not fall quarter, roll back the start year
+    if (month < 5) {
+        return (year - 1) - BASE_YEAR;
+    }
+    else {
+        return year - BASE_YEAR;
+    }
+};
+
+var getTermString = function(yearOffset, term) {
+    var year = BASE_YEAR + yearOffset;
+
+    switch (term) {
+        case 0:
+        return "Fall " + year;
+        case 1:
+        return "Winter " + (year + 1);
+        case 2:
+        return "Spring " + (year + 1);
+    }
+};
+
+var findGroup = function(lastName) {
+    for (var i = 0; i < group.length; i++) {
+        if (group[i].contains(lastName)) {
+            return group[i];
+        }
+    }
+    alert("Unexpected error");
+};
+
+$(function() {
+    var div = $("#rotations");
+
+    var run = function() {
+        var lastName = $("#lastName").val();
+
+        // If last name is not valid, display an error
+        if (!isValidName(lastName)) {
+            return;
+        }
+
+        // Otherwise, build the tables
+        var yearOffset = getYearOffset();
+        var lastNameGroup = findGroup(lastName);
+
+        for (var y = 0; y < 4; y++) {
+            var table = $("<table></table>");
+            var tbody = $("<tbody></tbody>");
+
+            for (var q = 0; q < 3; q++) {
+                var tr = $("<tr></tr>");
+                var calcYear = yearOffset + y;
+
+                tr.append($("<th></th>").html(getTermString(calcYear, q)));
+                tr.append($("<td></td>").html(lastNameGroup.getFutureRotation(calcYear, q)));
+
+                tbody.append(tr);
+            }
+
+            div.append(table);
+            table.append(tbody);
+        }
+    };
+
+    $("#calculate").submit(function(e) {
+        div.empty();
+        run();
+        e.preventDefault();
+    });
+})
+
+</script>
+
+<style type="text/css">
+
+* {
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;
+    font-size: 20px;
+}
+
+html, body {
+    margin: 0;
+    padding: 15px;
+    text-align: center;
+}
+
+#content {
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 5px;
+    font-weight: normal;
+    text-align: center;
+}
+
+input {
+    margin-bottom: 10px;
+    padding: 0;
+    font-weight: bold;
+    text-align: center;
+    text-transform: capitalize;
+    background: transparent;
+    border: none;
+}
+
+@media only screen and (min-width: 410px) {
+    h1, input {
+        font-size: 36px;
+    }
+
+    input {
+        width: 360px;
+    }
+}
+
+@media only screen and (max-width: 410px) {
+    h1, input {
+        font-size: 24px;
+    }
+
+    input {
+        width: 240px;
+    }
+}
+
+input:focus {
+    background: #ffffcc;
+    border-radius: 10px;
+    outline: none;
+}
+
+#rotations {
+    padding: 15px;
+    text-align: center;
+}
+
+table {
+    margin: 10px auto;
+}
+
+th, td {
+    padding: 2px 10px;
+}
+
+th {
+    font-weight: 700;
+}
+
+td {
+    text-align: center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="content">
+    <h1>Cal Poly Registration<br />Rotation Numbers for</h1>
+    <form id="calculate">
+        <input id="lastName" type="text" placeholder="your last name" />
+    </form>
+    <div id="rotations"></div>
+</div>
+
+</body>
+
+</html>
